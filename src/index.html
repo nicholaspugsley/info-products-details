@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Complete Checkout Form</title>
+    <link href="./output.css" rel="stylesheet" />
+    <script src="https://js.stripe.com/v3/"></script>
+  </head>
+  <body class="bg-gray-100 font-sans">
+    <main class="p-4 mx-auto max-w-6xl">
+      <header id="top" class="flex items-center p-4 bg-gray-100">
+        <img
+          src="path/to/your-logo.png"
+          alt="Company Logo"
+          style="width: 120px; height: auto"
+        />
+      </header>
+
+      <section class="container mx-auto px-4">
+        <form id="checkout-form" class="p-5 rounded-xl border border-gray-400">
+          <div id="step1" class="step">
+            <h2 class="text-lg font-semibold mb-4">
+              Step 1: Contact Information
+            </h2>
+            <div class="mb-4">
+              <label
+                for="full-name"
+                class="block text-sm font-medium text-gray-700"
+                >Full Name *</label
+              >
+              <input
+                type="text"
+                id="full-name"
+                name="full_name"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+              />
+            </div>
+            <div class="mb-4">
+              <label for="email" class="block text-sm font-medium text-gray-700"
+                >Email *</label
+              >
+              <input
+                type="email"
+                id="email"
+                name="email"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+              />
+            </div>
+            <div class="mb-4">
+              <label for="phone" class="block text-sm font-medium text-gray-700"
+                >Phone Number *</label
+              >
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+              />
+            </div>
+            <button
+              type="button"
+              id="to-step-2"
+              class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Continue to Payment
+            </button>
+          </div>
+
+          <div id="step2" class="hidden">
+            <h2 class="text-lg font-semibold mb-4">
+              Step 2: Product Selection and Payment
+            </h2>
+            <button
+              type="button"
+              id="back-to-step-1"
+              class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mb-4"
+            >
+              Back
+            </button>
+            <div id="product-selection" class="mb-4">
+              <!-- Products will be dynamically populated here -->
+            </div>
+            <div id="payment-element" class="mb-4">
+              <!-- Stripe Elements will be injected here -->
+            </div>
+
+            <div id="order-bumps" class="mb-4">
+              <!-- Order bumps will be dynamically populated here -->
+            </div>
+            <div id="total-amount" class="mb-4">Total: $0</div>
+            <button
+              type="submit"
+              class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Complete Order
+            </button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <footer class="text-center p-6">
+      <p class="text-sm mb-4">
+        Copyright &copy;
+        <script>
+          document.write(new Date().getFullYear());
+        </script>
+        Your Company Name. All Rights Reserved.
+      </p>
+      <a href="#privacy-policy" class="text-sm hover:text-blue-500"
+        >Privacy Policy</a
+      >
+      <span class="text-sm mx-2">||</span>
+      <a href="#terms-and-conditions" class="text-sm hover:text-blue-500"
+        >Terms and Conditions</a
+      >
+    </footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const stripe = Stripe(
+          "pk_test_51OQUOCDda5ktZLfTvfDPEwGNOSiyoKpFGXRzJ6bdbFx8PpR7GBmTgTdHW1xHYsxYq2ta7y0vHKZwcgzvlgDLsh6F00TDRRNGRQ"
+        );
+        const elements = stripe.elements();
+        const card = elements.create("card");
+        card.mount("#payment-element");
+
+        // Dummy product and order bump data for demonstration
+        const products = [
+          { id: "product1", name: "Product 1", price: 1000 },
+          { id: "product2", name: "Product 2", price: 2000 },
+          { id: "product3", name: "Product 3", price: 1500 },
+        ];
+
+        const orderBumps = [
+          { id: "bump1", name: "Order Bump 1", price: 500 },
+          { id: "bump2", name: "Order Bump 2", price: 800 },
+        ];
+
+        populateItems("#product-selection", products);
+        populateItems("#order-bumps", orderBumps);
+
+        document
+          .getElementById("to-step-2")
+          .addEventListener("click", function () {
+            // Validate required fields before showing Step 2
+            const fullName = document.getElementById("full-name").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const phone = document.getElementById("phone").value.trim();
+
+            if (!fullName || !email || !phone) {
+              alert("Please fill in all required fields.");
+              return;
+            }
+
+            document.getElementById("step1").classList.add("hidden");
+            document.getElementById("step2").classList.remove("hidden");
+          });
+
+        document
+          .getElementById("back-to-step-1")
+          .addEventListener("click", function () {
+            document.getElementById("step1").classList.remove("hidden");
+            document.getElementById("step2").classList.add("hidden");
+          });
+
+        document
+          .getElementById("checkout-form")
+          .addEventListener("submit", async (event) => {
+            event.preventDefault();
+            // Complete payment processing with Stripe here
+          });
+      });
+
+      function populateItems(containerSelector, items) {
+        const container = document.querySelector(containerSelector);
+        items.forEach((item) => {
+          const itemContainer = document.createElement("div");
+          itemContainer.className = "mb-2";
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.id = item.id;
+          checkbox.dataset.price = item.price;
+          checkbox.className = "mr-2";
+          checkbox.onchange = updateTotal;
+
+          const label = document.createElement("label");
+          label.htmlFor = item.id;
+          label.textContent = `${item.name} - $${(item.price / 100).toFixed(
+            2
+          )}`;
+
+          itemContainer.appendChild(checkbox);
+          itemContainer.appendChild(label);
+          container.appendChild(itemContainer);
+        });
+      }
+
+      function updateTotal() {
+        const selectedItems = document.querySelectorAll(
+          '#product-selection input[type="checkbox"]:checked, #order-bumps input[type="checkbox"]:checked'
+        );
+        const total = Array.from(selectedItems).reduce(
+          (acc, item) => acc + Number(item.dataset.price),
+          0
+        );
+        document.getElementById("total-amount").textContent = `Total: $${(
+          total / 100
+        ).toFixed(2)}`;
+      }
+    </script>
+  </body>
+</html>

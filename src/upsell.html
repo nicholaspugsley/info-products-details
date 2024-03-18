@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upsell Page</title>
+    <link href="/dist/output.css" rel="stylesheet" />
+    <script src="https://js.stripe.com/v3/"></script>
+  </head>
+  <body class="bg-gray-100">
+    <header class="text-center p-5">
+      <h1 class="text-3xl font-bold">Thank You for Your Purchase!</h1>
+      <p class="text-xl">Ready for even more value?</p>
+    </header>
+    <main class="p-4">
+      <section>
+        <h2 class="text-xl font-semibold">
+          Special Upsell Offer: Get [Upsell Product] for [Discounted Price]!
+        </h2>
+        <button
+          id="acceptUpsell"
+          class="bg-green-500 text-white font-bold py-2 px-4 rounded"
+        >
+          Yes, Add to My Order
+        </button>
+        <button
+          id="declineUpsell"
+          class="bg-red-500 text-white font-bold py-2 px-4 rounded"
+        >
+          No, Thank You
+        </button>
+      </section>
+    </main>
+    <script src="upsell.js"></script>
+  </body>
+</html>
