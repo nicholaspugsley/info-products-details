@@ -129,7 +129,6 @@
         const card = elements.create("card");
         card.mount("#payment-element");
 
-        // Dummy product and order bump data for demonstration
         const products = [
           { id: "product1", name: "Product 1", price: 1000 },
           { id: "product2", name: "Product 2", price: 2000 },
@@ -147,7 +146,6 @@
         document
           .getElementById("to-step-2")
           .addEventListener("click", function () {
-            // Validate required fields before showing Step 2
             const fullName = document.getElementById("full-name").value.trim();
             const email = document.getElementById("email").value.trim();
             const phone = document.getElementById("phone").value.trim();
@@ -172,7 +170,74 @@
           .getElementById("checkout-form")
           .addEventListener("submit", async (event) => {
             event.preventDefault();
-            // Complete payment processing with Stripe here
+
+            // Collecting customer information
+            const fullName = document.getElementById("full-name").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const phone = document.getElementById("phone").value.trim();
+
+            // Assuming each selected product/option has a quantity of 1 for simplicity
+            const selectedItems = Array.from(
+              document.querySelectorAll(
+                '#product-selection input[type="checkbox"]:checked, #order-bumps input[type="checkbox"]:checked'
+              )
+            ).map((item) => ({
+              id: item.id,
+              price: Number(item.dataset.price),
+              quantity: 1,
+            }));
+
+            // Prepare the payload to send
+            const payload = {
+              items: selectedItems,
+              customer: { fullName, email, phone },
+            };
+
+            try {
+              // Request to create a payment intent
+              const response = await fetch(
+                "/.netlify/functions/create-payment-intent",
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(payload),
+                }
+              );
+
+              const data = await response.json();
+
+              if (!response.ok)
+                throw new Error(
+                  data.error || "Failed to create payment intent."
+                );
+
+              // Confirm the card payment
+              const result = await stripe.confirmCardPayment(
+                data.clientSecret,
+                {
+                  payment_method: {
+                    card: card,
+                    billing_details: {
+                      name: fullName,
+                      email: email,
+                      phone: phone,
+                    },
+                  },
+                }
+              );
+
+              if (result.error) {
+                console.error(result.error.message);
+                alert("Payment failed: " + result.error.message);
+              } else {
+                if (result.paymentIntent.status === "succeeded") {
+                  window.location.href = "./thankyou.html"; // Redirect on successful payment
+                }
+              }
+            } catch (error) {
+              console.error("Payment error:", error);
+              alert("Payment error: " + error.message);
+            }
           });
       });
 
@@ -186,14 +251,11 @@
           checkbox.id = item.id;
           checkbox.dataset.price = item.price;
           checkbox.className = "mr-2";
-          checkbox.onchange = updateTotal;
-
           const label = document.createElement("label");
           label.htmlFor = item.id;
           label.textContent = `${item.name} - $${(item.price / 100).toFixed(
             2
           )}`;
-
           itemContainer.appendChild(checkbox);
           itemContainer.appendChild(label);
           container.appendChild(itemContainer);
