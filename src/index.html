@@ -81,16 +81,9 @@
             >
               Back
             </button>
-            <div id="product-selection" class="mb-4">
-              <!-- Products will be dynamically populated here -->
-            </div>
-            <div id="payment-element" class="mb-4">
-              <!-- Stripe Elements will be injected here -->
-            </div>
-
-            <div id="order-bumps" class="mb-4">
-              <!-- Order bumps will be dynamically populated here -->
-            </div>
+            <div id="product-selection" class="mb-4"></div>
+            <div id="payment-element" class="mb-4"></div>
+            <div id="order-bumps" class="mb-4"></div>
             <div id="total-amount" class="mb-4">Total: $0</div>
             <button
               type="submit"
@@ -129,6 +122,43 @@
         const card = elements.create("card");
         card.mount("#payment-element");
 
+        function updateTotal() {
+          const selectedItems = document.querySelectorAll(
+            '#product-selection input[type="checkbox"]:checked, #order-bumps input[type="checkbox"]:checked'
+          );
+          const total = Array.from(selectedItems).reduce(
+            (acc, item) => acc + Number(item.dataset.price),
+            0
+          );
+          document.getElementById("total-amount").textContent = `Total: $${(
+            total / 100
+          ).toFixed(2)}`;
+        }
+
+        // This function populates products and order bumps dynamically.
+        function populateItems(containerSelector, items) {
+          const container = document.querySelector(containerSelector);
+          items.forEach((item) => {
+            const itemContainer = document.createElement("div");
+            itemContainer.className = "mb-2";
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.id = item.id;
+            checkbox.dataset.price = item.price;
+            checkbox.className = "mr-2";
+            checkbox.onchange = updateTotal;
+            const label = document.createElement("label");
+            label.htmlFor = item.id;
+            label.textContent = `${item.name} - $${(item.price / 100).toFixed(
+              2
+            )}`;
+            itemContainer.appendChild(checkbox);
+            itemContainer.appendChild(label);
+            container.appendChild(itemContainer);
+          });
+        }
+
+        // Example product and order bump data
         const products = [
           { id: "product1", name: "Product 1", price: 1000 },
           { id: "product2", name: "Product 2", price: 2000 },
@@ -171,12 +201,9 @@
           .addEventListener("submit", async (event) => {
             event.preventDefault();
 
-            // Collecting customer information
             const fullName = document.getElementById("full-name").value.trim();
             const email = document.getElementById("email").value.trim();
             const phone = document.getElementById("phone").value.trim();
-
-            // Assuming each selected product/option has a quantity of 1 for simplicity
             const selectedItems = Array.from(
               document.querySelectorAll(
                 '#product-selection input[type="checkbox"]:checked, #order-bumps input[type="checkbox"]:checked'
@@ -187,14 +214,12 @@
               quantity: 1,
             }));
 
-            // Prepare the payload to send
             const payload = {
               items: selectedItems,
               customer: { fullName, email, phone },
             };
 
             try {
-              // Request to create a payment intent
               const response = await fetch(
                 "/.netlify/functions/create-payment-intent",
                 {
@@ -206,12 +231,12 @@
 
               const data = await response.json();
 
-              if (!response.ok)
+              if (!response.ok) {
                 throw new Error(
                   data.error || "Failed to create payment intent."
                 );
+              }
 
-              // Confirm the card payment
               const result = await stripe.confirmCardPayment(
                 data.clientSecret,
                 {
@@ -231,7 +256,7 @@
                 alert("Payment failed: " + result.error.message);
               } else {
                 if (result.paymentIntent.status === "succeeded") {
-                  window.location.href = "./thankyou.html"; // Redirect on successful payment
+                  window.location.href = "./thankyou.html";
                 }
               }
             } catch (error) {
@@ -240,40 +265,6 @@
             }
           });
       });
-
-      function populateItems(containerSelector, items) {
-        const container = document.querySelector(containerSelector);
-        items.forEach((item) => {
-          const itemContainer = document.createElement("div");
-          itemContainer.className = "mb-2";
-          const checkbox = document.createElement("input");
-          checkbox.type = "checkbox";
-          checkbox.id = item.id;
-          checkbox.dataset.price = item.price;
-          checkbox.className = "mr-2";
-          const label = document.createElement("label");
-          label.htmlFor = item.id;
-          label.textContent = `${item.name} - $${(item.price / 100).toFixed(
-            2
-          )}`;
-          itemContainer.appendChild(checkbox);
-          itemContainer.appendChild(label);
-          container.appendChild(itemContainer);
-        });
-      }
-
-      function updateTotal() {
-        const selectedItems = document.querySelectorAll(
-          '#product-selection input[type="checkbox"]:checked, #order-bumps input[type="checkbox"]:checked'
-        );
-        const total = Array.from(selectedItems).reduce(
-          (acc, item) => acc + Number(item.dataset.price),
-          0
-        );
-        document.getElementById("total-amount").textContent = `Total: $${(
-          total / 100
-        ).toFixed(2)}`;
-      }
     </script>
   </body>
 </html>
